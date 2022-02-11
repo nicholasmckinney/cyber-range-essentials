@@ -1,0 +1,33 @@
+- name: Set ingress firewall rules for VLAN30 (IDS)
+  vyos_config:
+    save: yes
+    lines:
+      - set firewall name VLAN30-IDS-Ingress description 'Traffic ingress to VLAN30 (IDS)'
+      - set firewall name VLAN30-IDS-Ingress default-action 'drop'
+      - set firewall name VLAN30-IDS-Ingress enable-default-log
+
+     #### ALLOW SSH, HTTPS, ICMP FROM MANAGEMENT ####
+      - set firewall name VLAN30-IDS-Ingress rule 10 description 'Allow SSH from management subnet'
+      - set firewall name VLAN30-IDS-Ingress rule 10 action 'accept'
+      - set firewall name VLAN30-IDS-Ingress rule 10 source group network-group VLAN1-MANAGEMENT
+      - set firewall name VLAN30-IDS-Ingress rule 10 destination group port-group PORT-TCP-SSH
+
+      - set firewall name VLAN30-IDS-Ingress rule 20 description 'Allow ICMP from management subnet'
+      - set firewall name VLAN30-IDS-Ingress rule 20 action 'accept'
+      - set firewall name VLAN30-IDS-Ingress rule 20 source group network-group VLAN1-MANAGEMENT
+      - set firewall name VLAN30-IDS-Ingress rule 20 protocol icmp
+
+      - set firewall name VLAN30-IDS-Ingress rule 30 description 'Allow HTTPS from management subnet'
+      - set firewall name VLAN30-IDS-Ingress rule 30 action 'accept'
+      - set firewall name VLAN30-IDS-Ingress rule 30 source group network-group VLAN1-MANAGEMENT
+      - set firewall name VLAN30-IDS-Ingress rule 30 protocol tcp
+      - set firewall name VLAN30-IDS-Ingress rule 30 destination group port-group PORT-TCP-HTTP
+
+    #### ALLOW HTTPS FROM PROXY ####
+      - set firewall name VLAN30-IDS-Ingress rule 30 description 'Allow HTTPS from proxy subnet'
+      - set firewall name VLAN30-IDS-Ingress rule 30 action 'accept'
+      - set firewall name VLAN30-IDS-Ingress rule 30 source group network-group VLAN10-Proxy
+      - set firewall name VLAN30-IDS-Ingress rule 30 protocol tcp
+      - set firewall name VLAN30-IDS-Ingress rule 30 destination group port-group PORT-TCP-HTTP
+
+      - set interface ethernet eth1 vif 30 firewall out name VLAN30-IDS-Ingress

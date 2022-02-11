@@ -1,0 +1,57 @@
+- hosts: proxy
+  become: yes
+  tasks:
+    - name: Make cloudflare dir
+      file:
+        path: /etc/cloudflared
+        state: directory
+        
+    - name: Copy cloudflare cert
+      copy:
+        src: ../../shared/argo.pem
+        dest: /etc/cloudflared/cert.pem
+        force: yes
+        mode: 440
+
+    - name: Start cloudflared tunnel for RDP
+      containers.podman.podman_container:
+        name: rdp
+        image: docker.io/cloudflare/cloudflared:2021.11.0
+        command: tunnel --no-autoupdate --hostname rdp.{{ lab_domain }} --url rdp://10.0.20.10:3389
+        env:
+          TUNNEL_ORIGIN_CERT: /etc/cloudflared/cert.pem
+        volume: /etc/cloudflared:/etc/cloudflared
+        network:
+          - host
+        generate_systemd:
+          path: /etc/systemd/system
+          restart_policy: always
+          container_prefix: cloudflared
+
+    - name: Start cloudflared tunnel for Proxmox
+      containers.podman.podman_container:
+        name: proxmox
+        image: docker.io/cloudflare/cloudflared:2021.11.0
+        command: tunnel --no-autoupdate --no-chunked-encoding --hostname proxmox.{{ lab_domain }} --url https://proxmox.{{ lab_domain }}
+        env:
+          TUNNEL_ORIGIN_CERT: /etc/cloudflared/cert.pem
+        volume: /etc/cloudflared:/etc/cloudflared
+        network:
+          - host
+        generate_systemd:
+          path: /etc/systemd/system
+          restart_policy: always
+          container_prefix: cloudflared 
+
+    - name: Enable tunnel for RDP
+      systemd:
+        daemon_reload: yes
+        name: cloudflared-rdp
+        enabled: yes
+        state: started
+
+    - name: Enable tunnel for Proxmox
+      systemd:
+        name: cloudflared-proxmox
+        enabled: yes
+        state: started

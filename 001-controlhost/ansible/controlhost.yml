@@ -1,0 +1,63 @@
+- hosts: localhost
+  become: yes
+  tasks:
+    - name: Generating keypair
+      openssh_keypair:
+        path: ../../shared/id_ssh_rsa
+
+    - name: Set default python version to python3
+      alternatives:
+        name: python
+        link: /usr/bin/python
+        path: /usr/bin/python3
+
+    - name: Install sshpass
+      apt:
+        name: sshpass
+
+    - name: Install jq
+      apt:
+        name: jq
+
+    - name: Install unarchiving packages
+      apt:
+        name: unzip
+
+    - name: Download aws-cli v2
+      get_url:
+        url: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+        dest: /tmp/awscliv2.zip
+        mode: "u=rwx,g=,o="
+
+    - name: Unzip aws-cli v2
+      shell: unzip -d /tmp /tmp/awscliv2.zip
+      args:
+        creates: /tmp/aws
+
+    - name: Install aws-cli v2
+      shell: /tmp/aws/install
+      args:
+        creates: /tmp/aws
+
+    - name: Install boto3
+      pip:
+        name: boto3
+        executable: pip3
+
+    - name: Install boto
+      pip:
+        name: boto
+        executable: pip3
+
+    - name: Add Terraform apt key
+      apt_key:
+        url: https://apt.releases.hashicorp.com/gpg
+
+    - name: Add Hashicorp Repository
+      apt_repository:
+        repo: "deb [arch=amd64] https://apt.releases.hashicorp.com {{ ansible_distribution_release }} main"
+
+    - name: Install Terraform
+      apt:
+        update_cache: yes
+        name: terraform

@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1.0",
+  "description": "Session Manager settings",
+  "sessionType": "Standard_Stream",
+  "inputs": {
+    "s3BucketName": "SYSTEMS_ACCOUNT_ID-ssm-logs",
+    "s3EncryptionEnabled": true,
+    "kmsKeyId": "KMS_KEY_ID_PLACEHOLDER"
+  }
+}

@@ -1,0 +1,35 @@
+- hosts: localhost
+  vars:
+    region: "us-east-1"
+    boto_profile: "default"
+    terraform_bucket: "{{ lab_domain|replace('.','-') }}-terraform-state"
+    terraform_state_key: iam_sso.tfstate
+  tasks:
+    - name: Create Terraform remote backend config
+      template:
+        src: 's3_backend.tf.tpl'
+        dest: 'files/iam-sso-{{ "jumpcloud" if use_jumpcloud|bool else "google" }}/s3_backend.tf'
+        force: yes
+
+
+    - name: "Create Jumpcloud AWS IAM Roles and SSO Providers for member accounts"
+      terraform:
+        project_path: 'files/iam-sso-jumpcloud/'
+        force_init: yes
+        variables:
+          region: "{{ region }}"
+          security_account_id: "{{ security_account_id }}"
+          systems_account_id: "{{ systems_account_id }}"
+          vault_account_id: "{{ vault_account_id }}"
+      when: use_jumpcloud|bool
+
+    - name: "Create Google Workspace (GSuite) IAM provider and IAM roles for member accounts"
+      terraform:
+        project_path: 'files/iam-sso-google/'
+        force_init: yes
+        variables:
+          region: "{{ region }}"
+          security_account_id: "{{ security_account_id }}"
+          systems_account_id: "{{ systems_account_id }}"
+          vault_account_id: "{{ vault_account_id }}"
+      when: not use_jumpcloud|bool

@@ -1,0 +1,39 @@
+- name: Set ingress firewall rules for VLAN20 (Jump)
+  vyos_config:
+    save: yes
+    lines:
+      - set firewall name VLAN20-Jump-Ingress description 'Traffic ingress to VLAN20 (Jump)'
+      - set firewall name VLAN20-Jump-Ingress default-action 'drop'
+      - set firewall name VLAN20-Jump-Ingress enable-default-log
+     
+     #### ALLOW RDP ####
+      - set firewall name VLAN20-Jump-Ingress rule 5 description 'Allow RDP'
+      - set firewall name VLAN20-Jump-Ingress rule 5 action 'accept'
+      - set firewall name VLAN20-Jump-Ingress rule 5 destination port '3389'
+      - set firewall name VLAN20-Jump-Ingress rule 5 protocol tcp
+
+     #### ALLOW HTTP, SSH, ICMP FROM MANAGEMENT ####
+      - set firewall name VLAN20-Jump-Ingress rule 10 description 'Allow HTTP from management subnet'
+      - set firewall name VLAN20-Jump-Ingress rule 10 action 'accept'
+      - set firewall name VLAN20-Jump-Ingress rule 10 source group network-group VLAN1-MANAGEMENT
+      - set firewall name VLAN20-Jump-Ingress rule 10 destination group port-group PORT-TCP-HTTP
+
+      - set firewall name VLAN20-Jump-Ingress rule 20 description 'Allow SSH from management subnet'
+      - set firewall name VLAN20-Jump-Ingress rule 20 action 'accept'
+      - set firewall name VLAN20-Jump-Ingress rule 20 source group network-group VLAN1-MANAGEMENT
+      - set firewall name VLAN20-Jump-Ingress rule 20 destination group port-group PORT-TCP-SSH
+
+      - set firewall name VLAN20-Jump-Ingress rule 30 description 'Allow ICMP from management subnet'
+      - set firewall name VLAN20-Jump-Ingress rule 30 action 'accept'
+      - set firewall name VLAN20-Jump-Ingress rule 30 source group network-group VLAN1-MANAGEMENT
+      - set firewall name VLAN20-Jump-Ingress rule 30 protocol icmp
+
+
+     #### ALLOW HTTP FROM PROXY ####
+      - set firewall name VLAN20-Jump-Ingress rule 100 description 'Allow HTTP from proxy subnet'
+      - set firewall name VLAN20-Jump-Ingress rule 100 action 'accept'
+      - set firewall name VLAN20-Jump-Ingress rule 100 source group network-group VLAN10-Proxy
+      - set firewall name VLAN20-Jump-Ingress rule 100 destination group port-group PORT-TCP-HTTP
+
+
+      - set interface ethernet eth1 vif 20 firewall out name VLAN20-Jump-Ingress

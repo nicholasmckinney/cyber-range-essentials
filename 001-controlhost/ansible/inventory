@@ -1,0 +1,6 @@
+[all]
+localhost
+ansible_become=true
+
+[all:vars]
+ansible_connection=local

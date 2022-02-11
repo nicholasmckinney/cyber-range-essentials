@@ -1,0 +1,79 @@
+- hosts: jump
+  tasks:
+    - name: Allow inbound RDP
+      community.general.ufw:
+        logging: 'on'
+        rule: allow
+        port: '3389'
+
+    - name: Set apt proxy
+      copy:
+        src: proxy.conf
+        dest: /etc/apt/apt.conf.d/proxy.conf
+
+    - name: Install packages for graphical remote access
+      apt:
+        name: 
+          - xrdp
+          - gnome-session
+          - gdm3
+          - remmina
+          - remmina-plugin-rdp
+          - remmina-plugin-secret
+
+    - name: Install security updates automatically
+      apt:
+        name: unattended-upgrades
+
+    - name: Add xrdp user to ssl-cert group
+      user:
+        name: xrdp
+        groups: ssl-cert
+        append: yes
+
+    - name: Restart xrdp
+      systemd:
+        name: xrdp
+        state: restarted
+
+    - name: Install packages for LDAP authentication
+      apt:
+        name:
+          - sssd
+      tags:
+        - never
+
+    - name: Template SSSD configuration
+      template:
+        src: sssd.conf.tmpl
+        dest: /etc/sssd/sssd.conf
+        force: yes
+      tags:
+        - never
+
+    - name: Copy Google Secure LDAP certificate
+      copy:
+        src: ../../shared/GoogleSecureLDAP.crt
+        dest: /etc/sssd/GoogleSecureLDAP.crt
+      tags:
+        - never
+
+    - name: Copy Google Secure LDAP key
+      copy:
+        src: ../../shared/GoogleSecureLDAP.key
+        dest: /etc/sssd/GoogleSecureLDAP.key
+      tags:
+         - never
+
+    - name: Enable new homedir on user login from LDAP for first time
+      shell: /usr/sbin/pam-auth-update --enable mkhomedir
+      tags:
+        - never
+
+    - name: Restart sssd
+      systemd:
+        name: sssd
+        enabled: yes
+        state: restarted
+      tags:
+        - never

@@ -1,0 +1,62 @@
+- hosts: switch
+  gather_facts: no
+  tasks:
+    - name: Set Banner
+      ios_banner:
+        banner: login
+        text: "{{ lookup('file', 'banner.txt')}}"
+
+    - name: Set hostname
+      ios_command:
+        commands:
+          - configure terminal
+          - hostname sw1
+
+    - name: Create VLANs
+      ios_command:
+        commands:
+          - configure terminal
+          - vlan database
+          - "vlan {{ item.vlan_id }}"
+          - "interface {{ item.port }}"
+          - switchport mode access
+          - "switchport access vlan {{ item.vlan_id }}"
+          - no shutdown
+          - end
+      loop:
+        - { vlan_id: '10', port: 'gi1' } # PROXY
+        - { vlan_id: '20', port: 'gi2' } # JUMP
+        - { vlan_id: '30', port: 'gi3' } # LOCAL-IDS
+        - { vlan_id: '40', port: 'gi4' } # MALWARE-ANALYSIS
+        - { vlan_id: '50', port: 'gi5' } # ATTACK-LAB
+
+    - name: Create trunk port
+      ios_command:
+        commands:
+          - configure terminal
+          - interface gi10
+          - switchport mode trunk
+          - switchport trunk allowed vlan add 10
+          - switchport trunk allowed vlan add 20
+          - switchport trunk allowed vlan add 30
+          - switchport trunk allowed vlan add 40
+          - switchport trunk allowed vlan add 50
+          - no shutdown
+          - end
+
+    - name: Configure IP Address
+      ios_command:
+        commands:
+          - configure terminal
+          - interface vlan 1
+          - no ip address dhcp
+          - no ip address 192.168.1.254
+          - ip address 10.0.1.2 255.255.255
+          - ip default-gateway 10.0.1.1
+
+    - name: Save config
+      ios_command:
+        commands:
+          - command: "copy running-config startup-config"
+            prompt: "Overwrite file"
+            answer: 'y'

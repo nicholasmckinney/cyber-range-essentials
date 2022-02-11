@@ -1,0 +1,51 @@
+- hosts: proxy, jump
+  vars:
+    ssm_download_url: https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/debian_amd64/amazon-ssm-agent.deb 
+    region: us-east-1
+  tasks:
+    - name: Check for SSM Agent
+      shell: dpkg -l amazon-ssm-agent 2>&1
+      register: deb_check
+      ignore_errors: true
+
+    - name: Install SSM agent
+      environment:
+        https_proxy: http://10.0.10.1:3127
+      apt:
+        deb: "{{ ssm_download_url }}"
+
+    - name: Create overrides directory
+      file:
+        path: /etc/systemd/system/amazon-ssm-agent.service.d
+        state: directory
+
+    - name: Set overrides for HTTP proxy 
+      copy:
+        src: ssm_overrides.conf
+        dest: /etc/systemd/system/amazon-ssm-agent.service.d/override.conf
+
+    - name: Stop SSM service
+      service:
+        name: amazon-ssm-agent
+        state: stopped
+
+    - name: Activate agent
+      environment:
+        https_proxy: http://10.0.10.1:3127
+      shell: amazon-ssm-agent -register -code "{{ ssm_activation_code }}" -id "{{ ssm_activation_id }}" -region "{{ region }}"
+      when: deb_check.stdout.find('no package found') != -1
+
+    - name: Daemon reload
+      shell: systemctl daemon-reload
+
+    - name: Reload service
+      service:
+        name: amazon-ssm-agent
+        state: reloaded
+        daemon_reload: yes
+
+    - name: Start SSM service
+      service:
+        name: amazon-ssm-agent
+        state: started
+        enabled: yes

@@ -1,0 +1,5 @@
+10.0.40.10 mal-01.{{ lab_domain }}
+10.0.30.10 mon-01.{{ lab_domain }}
+10.0.20.10 jmp-01.{{ lab_domain }} rdp.{{ lab_domain }} ssh.{{ lab_domain }}
+10.0.10.10 prx-01 proxmox.{{ lab_domain }} onion.{{ lab_domain }}
+10.0.10.1  squid.{{ lab_domain }}

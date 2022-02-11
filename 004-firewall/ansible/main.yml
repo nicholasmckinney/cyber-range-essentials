@@ -1,0 +1,101 @@
+- hosts: vyos
+  tasks:
+    - name: Allow only established,related connections from Internet to lab
+      vyos_config:
+        save: yes
+        lines:
+          #### ALLOW ALL ESTABLISHED, RELATED TRAFFIC INBOUND ####
+          - set firewall state-policy established action 'accept'
+          - set firewall state-policy related action 'accept'
+          - set firewall state-policy invalid action 'reject'
+          - set firewall name FROM-INTERNET default-action 'drop'
+          - set firewall name FROM-INTERNET rule 10 action 'accept'
+          - set firewall name FROM-INTERNET rule 10 state established 'enable'
+          - set firewall name FROM-INTERNET rule 10 state related 'enable'
+          - set interfaces ethernet eth0 firewall in name 'FROM-INTERNET'
+
+    - name: Create address groups (CIDR range aliases) for each VLAN
+      vyos_config:
+        save: yes
+        lines:
+          - set firewall group network-group VLAN1-MANAGEMENT network 10.0.1.0/24
+          - set firewall group network-group VLAN10-Proxy network 10.0.10.0/24
+          - set firewall group network-group VLAN20-Jump network 10.0.20.0/24
+          - set firewall group network-group VLAN30-IDS network 10.0.30.0/24
+          - set firewall group network-group VLAN40-MalwareAnalysis network 10.0.40.0/24
+          - set firewall group network-group VLAN50-AttackLab network 10.0.50.0/24
+
+    - name: Create port groups for network services
+      vyos_config:
+        save: yes
+        lines:
+          - set firewall group port-group PORT-UDP-SYSLOG port 514
+          - set firewall group port-group PORT-UDP-DNS port 53
+          - set firewall group port-group PORT-TCP-SSH port 22
+          - set firewall group port-group PORT-TCP-HTTP port http
+          - set firewall group port-group PORT-TCP-HTTP port 443
+          - set firewall group port-group PORT-TCP-RDP port 3389
+          - set firewall group port-group PORT-TCP-VNC port 5800-5999
+
+    - name: Egress controls to internet from VLANs
+      vyos_config:
+        save: yes
+        lines:
+          - set firewall name TO-INTERNET default-action 'reject'
+
+          - set firewall name TO-INTERNET rule 10 description 'Allow outbound traffic from VLAN1 (MANAGEMENT)'
+          - set firewall name TO-INTERNET rule 10 action 'accept'
+          - set firewall name TO-INTERNET rule 10 source group network-group VLAN1-MANAGEMENT
+
+          - set firewall name TO-INTERNET rule 11 description 'Deny access to home subnet'
+          - set firewall name TO-INTERNET rule 11 action 'reject'
+          - set firewall name TO-INTERNET rule 11 destination address {{ home_net }}
+
+          - set firewall name TO-INTERNET rule 20 description 'Allow outbound traffic from VLAN10 (Proxy)'
+          - set firewall name TO-INTERNET rule 20 action 'accept'
+          - set firewall name TO-INTERNET rule 20 source group network-group VLAN10-Proxy
+
+          - set firewall name TO-INTERNET rule 30 description 'Allow outbound LDAPS traffic from VLAN20 (Jump)'
+          - set firewall name TO-INTERNET rule 30 action 'accept'
+          - set firewall name TO-INTERNET rule 30 source group network-group VLAN20-Jump
+          - set firewall name TO-INTERNET rule 30 protocol tcp
+          - set firewall name TO-INTERNET rule 30 destination port 636
+
+          - set firewall name TO-INTERNET rule 100 description 'Deny DNS traffic from all but VLAN1 and VLAN10'
+          - set firewall name TO-INTERNET rule 100 action 'drop'
+          - set firewall name TO-INTERNET rule 100 destination port 53
+          - set firewall name TO-INTERNET rule 100 protocol udp
+
+          - set firewall name TO-INTERNET rule 200 description 'Allow outbound traffic from VLAN40 (MalwareAnalysis)'
+          - set firewall name TO-INTERNET rule 200 action 'accept'
+          - set firewall name TO-INTERNET rule 200 source group network-group VLAN40-MalwareAnalysis
+          
+          - set firewall name TO-INTERNET rule 210 description 'Allow outbound traffic from VLAN50 (AttackLab)'
+          - set firewall name TO-INTERNET rule 210 action 'accept'
+          - set firewall name TO-INTERNET rule 210 source group network-group VLAN50-AttackLab
+
+          - set interfaces ethernet eth0 firewall out name 'TO-INTERNET'
+
+    - name: Include VLAN1 (Management) rule setup
+      include_tasks:
+        file: vlan1_management_rules.yml
+
+    - name: Include VLAN10 (Proxy) rule setup
+      include_tasks:
+        file: vlan10_proxy_rules.yml
+
+    - name: Include VLAN20 (Jump) rule setup
+      include_tasks:
+        file: vlan20_jump_rules.yml
+
+    - name: Include VLAN30 (IDS) rule setup
+      include_tasks:
+        file: vlan30_ids_rules.yml
+
+    - name: Include VLAN40 (MAL) rule setup
+      include_tasks:
+        file: vlan40_mal_rules.yml
+
+    - name: Include VLAN50 (AttackLab) rule setup
+      include_tasks:
+        file: vlan50_attacklab_rules.yml

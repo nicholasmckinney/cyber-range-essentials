@@ -1,0 +1,9 @@
+[all:vars]
+ansible_connection=ansible.netcommon.network_cli
+ansible_user=sysadmin
+ansible_become=yes
+ansible_become_method=enable
+ansible_network_os=cisco.ios.ios
+
+[switch]
+10.0.1.2 ansible_ssh_common_args="-o KexAlgorithms=+diffie-hellman-group1-sha1"

@@ -1,0 +1,13 @@
+[all:vars]
+ansible_connection=network_cli
+ansible_user=sysadmin
+ansible_become=yes
+ansible_become_method=enable
+ansible_network_os=vyos
+ansible_ssh_private_key_file=../shared/id_ssh_rsa
+
+[vyos:vars]
+vyos_key_username=sysadmin
+
+[vyos]
+10.0.1.1

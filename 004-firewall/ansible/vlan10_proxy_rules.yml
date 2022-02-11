@@ -1,0 +1,89 @@
+- name: Set ingress firewall rules for VLAN10 (Proxy)
+  vyos_config:
+    save: yes
+    lines:
+      - set firewall name VLAN10-Proxy-Ingress description 'Traffic ingress to VLAN10 from management'
+      - set firewall name VLAN10-Proxy-Ingress default-action 'drop'
+      - set firewall name VLAN10-Proxy-Ingress enable-default-log
+
+      #### ALLOW SYSLOG, DNS, SSH, HTTP(S) FROM MANAGEMENT #### 
+      - set firewall name VLAN10-Proxy-Ingress rule 10 description 'Allow syslog from management subnet'
+      - set firewall name VLAN10-Proxy-Ingress rule 10 action 'accept'
+      - set firewall name VLAN10-Proxy-Ingress rule 10 source group network-group VLAN1-MANAGEMENT
+      - set firewall name VLAN10-Proxy-Ingress rule 10 destination group port-group PORT-UDP-SYSLOG
+
+      - set firewall name VLAN10-Proxy-Ingress rule 20 description 'Allow DNS from management subnet'
+      - set firewall name VLAN10-Proxy-Ingress rule 20 action 'accept'
+      - set firewall name VLAN10-Proxy-Ingress rule 20 source group network-group VLAN1-MANAGEMENT
+      - set firewall name VLAN10-Proxy-Ingress rule 20 destination group port-group PORT-UDP-DNS
+
+      - set firewall name VLAN10-Proxy-Ingress rule 30 description 'Allow SSH from management'
+      - set firewall name VLAN10-Proxy-Ingress rule 30 action 'accept'
+      - set firewall name VLAN10-Proxy-Ingress rule 30 source group network-group VLAN1-MANAGEMENT
+      - set firewall name VLAN10-Proxy-Ingress rule 30 destination group port-group PORT-TCP-SSH
+
+      - set firewall name VLAN10-Proxy-Ingress rule 40 description 'Allow HTTP(S) for Proxmox from management'
+      - set firewall name VLAN10-Proxy-Ingress rule 40 action 'accept'
+      - set firewall name VLAN10-Proxy-Ingress rule 40 source group network-group VLAN1-MANAGEMENT
+      - set firewall name VLAN10-Proxy-Ingress rule 40 destination group port-group PORT-TCP-HTTP
+
+      - set firewall name VLAN10-Proxy-Ingress rule 41 description 'Allow HTTP proxying via Squid from management'
+      - set firewall name VLAN10-Proxy-Ingress rule 41 action 'accept'
+      - set firewall name VLAN10-Proxy-Ingress rule 41 source group network-group VLAN1-MANAGEMENT
+      - set firewall name VLAN10-Proxy-Ingress rule 41 destination port 3127
+      - set firewall name VLAN10-Proxy-Ingress rule 41 protocol tcp
+
+      #### ALLOW ICMP FROM LAB ####
+      - set firewall name VLAN10-Proxy-Ingress rule 50 description 'Allow ICMP from entire lab'
+      - set firewall name VLAN10-Proxy-Ingress rule 50 action 'accept'
+      - set firewall name VLAN10-Proxy-Ingress rule 50 protocol icmp
+
+
+      #### ALLOW HTTP, DNS FROM JUMP ####
+      - set firewall name VLAN10-Proxy-Ingress rule 60 description 'Allow HTTP(s) from jump subnet'
+      - set firewall name VLAN10-Proxy-Ingress rule 60 action 'accept'
+      - set firewall name VLAN10-Proxy-Ingress rule 60 source group network-group VLAN20-Jump
+      - set firewall name VLAN10-Proxy-Ingress rule 60 destination group port-group PORT-TCP-HTTP
+
+      - set firewall name VLAN10-Proxy-Ingress rule 61 description 'Allow HTTP proxying from jump subnet'
+      - set firewall name VLAN10-Proxy-Ingress rule 61 action 'accept'
+      - set firewall name VLAN10-Proxy-Ingress rule 61 source group network-group VLAN20-Jump
+      - set firewall name VLAN10-Proxy-Ingress rule 61 destination port 3127
+      - set firewall name VLAN10-Proxy-Ingress rule 61 protocol tcp
+
+      - set firewall name VLAN10-Proxy-Ingress rule 70 description 'Allow DNS from jump subnet'
+      - set firewall name VLAN10-Proxy-Ingress rule 70 action 'accept'
+      - set firewall name VLAN10-Proxy-Ingress rule 70 source group network-group VLAN20-Jump
+      - set firewall name VLAN10-Proxy-Ingress rule 70 destination group port-group PORT-UDP-DNS
+
+      #### ALLOW HTTP, DNS FROM IDS ####
+      - set firewall name VLAN10-Proxy-Ingress rule 80 description 'Allow HTTP proxying from IDS subnet'
+      - set firewall name VLAN10-Proxy-Ingress rule 80 action 'accept'
+      - set firewall name VLAN10-Proxy-Ingress rule 80 source group network-group VLAN30-IDS
+      - set firewall name VLAN10-Proxy-Ingress rule 80 destination port 3127
+      - set firewall name VLAN10-Proxy-Ingress rule 80 protocol tcp
+      
+      - set firewall name VLAN10-Proxy-Ingress rule 90 description 'Allow DNS from IDS subnet'
+      - set firewall name VLAN10-Proxy-Ingress rule 90 action 'accept'
+      - set firewall name VLAN10-Proxy-Ingress rule 90 source group network-group VLAN30-IDS
+      - set firewall name VLAN10-Proxy-Ingress rule 90 destination group port-group PORT-UDP-DNS
+
+      - set firewall name VLAN10-Proxy-Ingress rule 95 description 'Allow all traffic from SecurityOnion to Proxy'
+      - set firewall name VLAN10-Proxy-Ingress rule 95 action 'accept'
+      - set firewall name VLAN10-Proxy-Ingress rule 95 source group network-group VLAN30-IDS
+      - set firewall name VLAN10-Proxy-Ingress rule 95 destination address 10.0.10.10
+
+      #### ALLOW DNS FROM MALWAREANALYSIS ####
+      - set firewall name VLAN10-Proxy-Ingress rule 110 description 'Allow DNS from MalwareAnalysis subnet'
+      - set firewall name VLAN10-Proxy-Ingress rule 110 action 'accept'
+      - set firewall name VLAN10-Proxy-Ingress rule 110 source group network-group VLAN40-MalwareAnalysis
+      - set firewall name VLAN10-Proxy-Ingress rule 110 destination group port-group PORT-UDP-DNS
+
+      #### ALLOW DNS FROM ATTACKLAB ####
+      - set firewall name VLAN10-Proxy-Ingress rule 130 description 'Allow DNS from AttackLab subnet'
+      - set firewall name VLAN10-Proxy-Ingress rule 130 action 'accept'
+      - set firewall name VLAN10-Proxy-Ingress rule 130 source group network-group VLAN50-AttackLab
+      - set firewall name VLAN10-Proxy-Ingress rule 130 destination group port-group PORT-UDP-DNS
+
+      # "out" goes to the VLAN (i.e. ingress). "in" goes to hosts outside the VLAN (i.e. egress)
+      - set interface ethernet eth1 vif 10 firewall out name VLAN10-Proxy-Ingress

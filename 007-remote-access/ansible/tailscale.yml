@@ -1,0 +1,21 @@
+- hosts: proxy
+  tasks:
+    - name: Set Ubuntu release
+      raw: source /etc/os-release; echo $UBUNTU_CODENAME
+      args:
+        executable: /bin/bash
+      register: ubuntu_codename
+
+    - name: Install Tailscale GPG key
+      apt_key:
+        url: "https://pkgs.tailscale.com/stable/ubuntu/{{ ubuntu_codename.stdout_lines[1] }}.gpg"
+
+    - name: Install Tailscale apt repository
+      apt_repository:
+        repo: "deb https://pkgs.tailscale.com/stable/ubuntu {{ ubuntu_codename.stdout_lines[1] }} main"
+        filename: tailscale
+
+    - name: Install Tailscale
+      apt:
+        update_cache: yes
+        name: tailscale

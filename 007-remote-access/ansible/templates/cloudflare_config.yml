@@ -1,0 +1,7 @@
+hostname: proxmox.{{ lab_domain }}
+url: https://proxmox.{{ lab_domain }}
+logfile: /var/log/cloudflared.log
+{% if tunnel_id is defined %}
+tunnel: {{ tunnel_id }}
+credentials-file: /etc/cloudflared/{{ tunnel_id }}.json
+{% endif %}

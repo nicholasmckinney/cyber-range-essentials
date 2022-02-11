@@ -1,0 +1,41 @@
+- name: Set ingress firewall rules for VLAN50 (AttackLab)
+  vyos_config:
+    save: yes
+    lines:
+      - set firewall name VLAN50-ATKLab-Ingress description 'Traffic ingress to VLAN40 (MAL)'
+      - set firewall name VLAN50-ATKLab-Ingress default-action 'drop'
+      - set firewall name VLAN50-ATKLab-Ingress enable-default-log
+
+     #### ALLOW SSH, ICMP FROM MANAGEMENT ####
+      - set firewall name VLAN50-ATKLab-Ingress rule 10 description 'Allow SSH from management subnet'
+      - set firewall name VLAN50-ATKLab-Ingress rule 10 action 'accept'
+      - set firewall name VLAN50-ATKLab-Ingress rule 10 source group network-group VLAN1-MANAGEMENT
+      - set firewall name VLAN50-ATKLab-Ingress rule 10 destination group port-group PORT-TCP-SSH
+
+      - set firewall name VLAN50-ATKLab-Ingress rule 20 description 'Allow ICMP from management subnet'
+      - set firewall name VLAN50-ATKLab-Ingress rule 20 action 'accept'
+      - set firewall name VLAN50-ATKLab-Ingress rule 20 source group network-group VLAN1-MANAGEMENT
+      - set firewall name VLAN50-ATKLab-Ingress rule 20 protocol icmp
+
+    #### ALLOW SSH, ICMP, RDP, VNC FROM JUMP ####
+      - set firewall name VLAN50-ATKLab-Ingress rule 10 description 'Allow SSH from jump subnet'
+      - set firewall name VLAN50-ATKLab-Ingress rule 10 action 'accept'
+      - set firewall name VLAN50-ATKLab-Ingress rule 10 source group network-group VLAN20-Jump
+      - set firewall name VLAN50-ATKLab-Ingress rule 10 destination group port-group PORT-TCP-SSH
+
+      - set firewall name VLAN50-ATKLab-Ingress rule 20 description 'Allow ICMP from Jump'
+      - set firewall name VLAN50-ATKLab-Ingress rule 20 action 'accept'
+      - set firewall name VLAN50-ATKLab-Ingress rule 20 source group network-group VLAN20-Jump
+      - set firewall name VLAN50-ATKLab-Ingress rule 20 protocol icmp
+
+      - set firewall name VLAN50-ATKLab-Ingress rule 30 description 'Allow RDP from jump subnet'
+      - set firewall name VLAN50-ATKLab-Ingress rule 30 action 'accept'
+      - set firewall name VLAN50-ATKLab-Ingress rule 30 source group network-group VLAN20-Jump
+      - set firewall name VLAN50-ATKLab-Ingress rule 30 destination group port-group PORT-TCP-RDP
+
+      - set firewall name VLAN50-ATKLab-Ingress rule 40 description 'Allow VNC from jump subnet'
+      - set firewall name VLAN50-ATKLab-Ingress rule 40 action 'accept'
+      - set firewall name VLAN50-ATKLab-Ingress rule 40 source group network-group VLAN20-Jump
+      - set firewall name VLAN50-ATKLab-Ingress rule 40 destination group port-group PORT-TCP-VNC
+
+      - set interface ethernet eth1 vif 50 firewall out name VLAN50-ATKLab-Ingress

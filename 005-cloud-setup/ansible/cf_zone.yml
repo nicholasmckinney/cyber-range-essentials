@@ -1,0 +1,26 @@
+- hosts: localhost
+  vars:
+    region: "us-east-1"
+    boto_profile: "default"
+    terraform_bucket: "{{ lab_domain|replace('.','-') }}-terraform-state"
+    terraform_state_key: cloudflare.tfstate
+  tasks:
+    - name: Create Terraform remote backend config for Cloudflare Zone
+      template:
+        src: 's3_backend.tf.tpl'
+        dest: 'files/cloudflare-zone/s3_backend.tf'
+        force: yes
+
+
+    - name: "Configure Cloudflare zone"
+      terraform:
+        project_path: 'files/cloudflare-zone/'
+        force_init: yes
+        variables:
+          region: "{{ region }}"
+          zone: "{{ lab_domain }}"
+      register: tf_output
+
+    - name: "Writing CF api token"
+      shell: "echo {{ tf_output.outputs.caddy_token.value }} > ../../shared/api_token"
+      when: tf_output

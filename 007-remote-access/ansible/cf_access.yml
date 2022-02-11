@@ -1,0 +1,20 @@
+- hosts: localhost
+  vars:
+    region: "us-east-1"
+    boto_profile: "default"
+    terraform_bucket: "{{ lab_domain|replace('.','-') }}-terraform-state"
+    terraform_state_key: cloudflare_access.tfstate
+  tasks:
+    - name: Create Terraform remote backend config for Cloudflare Access
+      template:
+        src: 's3_backend.tf.tpl'
+        dest: 'files/cloudflare-access/s3_backend.tf'
+        force: yes
+
+    - name: "Configure Cloudflare Access application and DNS"
+      terraform:
+        project_path: 'files/cloudflare-access/'
+        force_init: yes
+        variables:
+          region: "{{ region }}"
+          lab_domain: "{{ lab_domain }}"

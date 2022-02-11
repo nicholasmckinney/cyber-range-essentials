@@ -1,0 +1,10 @@
+- name: Set ingress firewall rules for VLAN1 (Management)
+  vyos_config:
+    save: yes
+    lines:
+      - set firewall name VLAN1-Management-Ingress description 'Traffic ingress to VLAN1'
+      - set firewall name VLAN1-Management-Ingress default-action 'drop'
+      - set firewall name VLAN1-Management-Ingress enable-default-log
+
+      # "out" goes to the VLAN (i.e. ingress). "in" goes to hosts outside the VLAN (i.e. egress)
+      - set interface ethernet eth1 firewall out name VLAN1-Management-Ingress

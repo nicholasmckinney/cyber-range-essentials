@@ -1,0 +1,31 @@
+- hosts: localhost
+  become: false
+  vars:
+    region: "us-east-1"
+    boto_profile: "default"
+    terraform_bucket: "{{ lab_domain|replace('.','-') }}-terraform-state"
+    terraform_state_key: hybrid_management.tfstate
+  tasks:
+    - name: Create Terraform remote backend config
+      template:
+        src: 's3_backend.tf.tpl'
+        dest: 'files/hybrid-management/s3_backend.tf'
+        force: yes
+
+
+    - name: "Create hybrid management resources"
+      terraform:
+        project_path: 'files/hybrid-management/'
+        force_init: yes
+        variables:
+          systems_account_id: "{{ systems_account_id }}"
+          region: "us-east-1"
+
+    - name: "Replicate SSM logs"
+      terraform:
+        project_path: 'files/ssm-log-replication/'
+        force_init: yes
+        variables:
+          systems_account_id: "{{ systems_account_id }}"
+          vault_account_id: "{{ vault_account_id }}"
+          region: "us-east-1"

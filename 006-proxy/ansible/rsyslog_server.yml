@@ -1,0 +1,22 @@
+- name: Install rsyslog
+  apt:
+    name: rsyslog
+    update_cache: yes
+
+- name: Configure rsyslog server
+  copy:
+    src: 10-remote.conf
+    dest: /etc/rsyslog.d/10-remote.conf
+    mode: "u=rw,g=r,o=r"
+
+- name: Start and enable rsyslog server
+  service:
+    name: rsyslog
+    state: restarted
+    enabled: yes
+
+- name: Configure log rotation
+  copy:
+    src: logrotate.conf
+    dest: /etc/logrotate.d/remote
+    mode: "u=rw,g=r,o=r"

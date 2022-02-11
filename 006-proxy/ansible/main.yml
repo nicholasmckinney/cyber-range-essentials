@@ -1,0 +1,100 @@
+- hosts: all
+  vars:
+    proxy_securityonion: true
+  tasks:
+    - name: Install security updates automatically
+      apt:
+        update_cache: yes
+        name: unattended-upgrades
+
+    - name: Install podman
+      apt:
+        name: podman
+
+    - name: Install buildah
+      apt:
+        name: buildah
+
+    - name: Install crun
+      apt:
+        name: crun
+
+    - name: Stop systemd-resolve
+      systemd:
+        name: systemd-resolved
+        enabled: false
+        state: stopped
+
+    - name: Upload dnsmasq configuration
+      template:
+        src: dnsmasq.conf
+        dest: /etc/dnsmasq.conf
+        force: yes
+        mode: 600
+
+    - name: Copy hosts file for lab machines
+      template:
+        src: hosts
+        dest: /etc/dnsmasq_hosts
+        force: yes
+
+    - name: Start dnsmasq container
+      containers.podman.podman_container:
+        name: dnsmasq
+        image: docker.io/jpillora/dnsmasq
+        generate_systemd:
+          path: /etc/systemd/system
+          restart_policy: always
+        publish:
+          - 53:53/udp
+        volumes: 
+            - /etc/dnsmasq.conf:/etc/dnsmasq.conf
+            - /etc/dnsmasq_hosts:/etc/hosts
+
+    - name: Enable dnsmasq service
+      systemd:
+        name: container-dnsmasq
+        enabled: yes
+        state: started
+
+    - name: Reload systemd 
+      systemd:
+        daemon_reload: yes
+        name: container-dnsmasq
+        state: restarted
+
+    ##### OPTIONAL ######
+    - name: Configure rsyslog server
+      include_tasks: rsyslog_server.yml
+    #####################
+
+    - name: Copy caddy containerfile
+      copy:
+        src: Containerfile
+        dest: /root/Containerfile
+        force: yes
+
+    - name: Build caddy w/ cloudflare ACME provider
+      shell: buildah bud --runtime /usr/bin/crun -f /root/Containerfile -t caddy-cloudflare .
+      args:
+        chdir: /root 
+
+    - name: Start Caddy reverse proxy
+      containers.podman.podman_container:
+        name: caddy
+        image: localhost/caddy-cloudflare
+        env:
+          SITE_ADDRESS: proxmox.{{ lab_domain }}
+          CLOUDFLARE_API_TOKEN: "{{ lookup('file', '../../shared/api_token') }}"
+        generate_systemd:
+          path: /etc/systemd/system
+          restart_policy: always
+        publish:
+          - 80:80/tcp
+          - 443:443/tcp
+
+    - name: Enable caddy at boot
+      systemd:
+        daemon_reload: yes
+        enabled: yes
+        name: container-caddy 

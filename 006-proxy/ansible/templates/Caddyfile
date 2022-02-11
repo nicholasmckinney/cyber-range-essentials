@@ -1,0 +1,36 @@
+{$SITE_ADDRESS} {
+
+  reverse_proxy https://10.0.40.10:8006 {
+    transport http {
+      tls_insecure_skip_verify
+    }
+
+    header_up Host 10.0.40.10:8006
+  }
+
+  tls {
+    issuer acme {
+      dns cloudflare {$CLOUDFLARE_API_TOKEN}
+    }
+  }
+}
+
+{% if proxy_securityonion %}
+
+onion.{{ lab_domain }} {
+  
+  reverse_proxy https://10.0.30.10 {
+    transport http {
+      tls_insecure_skip_verify
+    }
+  }
+
+  tls {
+    issuer acme {
+      dns cloudflare {$CLOUDFLARE_API_TOKEN}
+    }
+  }
+
+}
+
+{% endif %}

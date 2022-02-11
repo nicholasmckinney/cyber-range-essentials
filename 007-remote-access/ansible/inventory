@@ -1,0 +1,10 @@
+[all:vars]
+ansible_user=sysadmin
+ansible_become=yes
+
+
+[jump]
+10.0.20.10
+
+[proxy]
+10.0.10.10

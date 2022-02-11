@@ -1,0 +1,14 @@
+[sssd]
+services = nss,pam
+domains = {{ lab_domain }}
+
+[domain/{{ lab_domain }}]
+ldap_tls_cert = /etc/sssd/GoogleSecureLDAP.crt
+ldap_tls_key = /etc/sssd/GoogleSecureLDAP.key
+ldap_uri = ldaps://ldap.google.com
+ldap_search_base = {{ lab_dc }}
+id_provider = ldap
+auth_provider = ldap
+ldap_schema = rfc2307bis
+ldap_user_uuid = entryUUID
+ldap_tls_cipher_suite = NORMAL:!VERS-TLS1.3

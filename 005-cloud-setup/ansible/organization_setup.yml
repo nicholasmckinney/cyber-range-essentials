@@ -1,0 +1,29 @@
+- hosts: localhost
+  vars:
+    region: "us-east-1"
+    boto_profile: "default"
+    terraform_bucket: "{{ lab_domain|replace('.','-') }}-terraform-state"
+    terraform_state_key: organization_root.tfstate
+  tasks:
+    - name: Create Terraform state bucket
+      s3_bucket:
+        name: "{{ terraform_bucket }}"
+        encryption: "AES256"
+
+    - name: Revoke public access to Terraform state bucket
+      shell: "aws s3api put-public-access-block --bucket {{ terraform_bucket }} \
+                --public-access-block-configuration 'BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true'"
+
+    - name: Create Terraform remote backend config
+      template:
+        src: 's3_backend.tf.tpl'
+        dest: 'files/organization-root/s3_backend.tf'
+        force: yes
+
+
+    - name: "Create AWS Organization"
+      terraform:
+        project_path: 'files/organization-root/'
+        force_init: yes
+        variables:
+          region: "{{ region }}"

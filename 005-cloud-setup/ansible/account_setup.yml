@@ -1,0 +1,21 @@
+- hosts: localhost
+  vars:
+    region: "us-east-1"
+    boto_profile: "default"
+    terraform_bucket: "{{ lab_domain|replace('.','-') }}-terraform-state"
+    terraform_state_key: organization_accounts.tfstate
+  tasks:
+    - name: Create Terraform remote backend config
+      template:
+        src: 's3_backend.tf.tpl'
+        dest: 'files/organization-accounts/s3_backend.tf'
+        force: yes
+
+
+    - name: "Create AWS Organization accounts"
+      terraform:
+        project_path: 'files/organization-accounts/'
+        force_init: yes
+        variables:
+          domain: "{{ lab_domain }}"
+          region: "{{ region }}"

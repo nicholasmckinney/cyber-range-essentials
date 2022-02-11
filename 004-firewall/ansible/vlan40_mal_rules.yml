@@ -1,0 +1,60 @@
+- name: Set ingress firewall rules for VLAN40 (MAL)
+  vyos_config:
+    save: yes
+    lines:
+      - set firewall name VLAN40-Mal-Ingress description 'Traffic ingress to VLAN40 (MAL)'
+      - set firewall name VLAN40-Mal-Ingress default-action 'drop'
+      - set firewall name VLAN40-Mal-Ingress enable-default-log
+
+     #### ALLOW HTTPS, SSH, ICMP FROM MANAGEMENT ####
+      - set firewall name VLAN40-Mal-Ingress rule 5 description 'Allow SSH from management subnet'
+      - set firewall name VLAN40-Mal-Ingress rule 5 action 'accept'
+      - set firewall name VLAN40-Mal-Ingress rule 5 source group network-group VLAN1-MANAGEMENT
+      - set firewall name VLAN40-Mal-Ingress rule 5 destination group port-group PORT-TCP-SSH
+
+      - set firewall name VLAN40-Mal-Ingress rule 6 description 'Allow ICMP from management subnet'
+      - set firewall name VLAN40-Mal-Ingress rule 6 action 'accept'
+      - set firewall name VLAN40-Mal-Ingress rule 6 source group network-group VLAN1-MANAGEMENT
+      - set firewall name VLAN40-Mal-Ingress rule 6 protocol icmp
+
+      - set firewall name VLAN40-Mal-Ingress rule 7 description 'Allow Proxmox HTTPS from management subnet'
+      - set firewall name VLAN40-Mal-Ingress rule 7 action 'accept'
+      - set firewall name VLAN40-Mal-Ingress rule 7 source group network-group VLAN1-MANAGEMENT
+      - set firewall name VLAN40-Mal-Ingress rule 7 protocol tcp
+      - set firewall name VLAN40-Mal-Ingress rule 7 destination port 8006
+
+    #### ALLOW SSH, ICMP, RDP, VNC FROM JUMP ####
+      - set firewall name VLAN40-Mal-Ingress rule 10 description 'Allow SSH from jump subnet'
+      - set firewall name VLAN40-Mal-Ingress rule 10 action 'accept'
+      - set firewall name VLAN40-Mal-Ingress rule 10 source group network-group VLAN20-Jump
+      - set firewall name VLAN40-Mal-Ingress rule 10 destination group port-group PORT-TCP-SSH
+
+      - set firewall name VLAN40-Mal-Ingress rule 20 description 'Allow ICMP from Jump'
+      - set firewall name VLAN40-Mal-Ingress rule 20 action 'accept'
+      - set firewall name VLAN40-Mal-Ingress rule 20 source group network-group VLAN20-Jump
+      - set firewall name VLAN40-Mal-Ingress rule 20 protocol icmp
+
+      - set firewall name VLAN40-Mal-Ingress rule 30 description 'Allow RDP from jump subnet'
+      - set firewall name VLAN40-Mal-Ingress rule 30 action 'accept'
+      - set firewall name VLAN40-Mal-Ingress rule 30 source group network-group VLAN20-Jump
+      - set firewall name VLAN40-Mal-Ingress rule 30 destination group port-group PORT-TCP-RDP
+
+      - set firewall name VLAN40-Mal-Ingress rule 40 description 'Allow VNC from jump subnet'
+      - set firewall name VLAN40-Mal-Ingress rule 40 action 'accept'
+      - set firewall name VLAN40-Mal-Ingress rule 40 source group network-group VLAN20-Jump
+      - set firewall name VLAN40-Mal-Ingress rule 40 destination group port-group PORT-TCP-VNC
+
+      - set firewall name VLAN40-Mal-Ingress rule 50 description 'Allow Proxmox HTTPS from jump subnet'
+      - set firewall name VLAN40-Mal-Ingress rule 50 action 'accept'
+      - set firewall name VLAN40-Mal-Ingress rule 50 source group network-group VLAN20-Jump
+      - set firewall name VLAN40-Mal-Ingress rule 50 protocol tcp
+      - set firewall name VLAN40-Mal-Ingress rule 50 destination port 8006
+
+    #### ALLOW PROXMOX HTTPS (TCP 8006) FROM PROXY ####
+      - set firewall name VLAN40-Mal-Ingress rule 60 description 'Allow Proxmox HTTPS from Proxy subnet'
+      - set firewall name VLAN40-Mal-Ingress rule 60 action 'accept'
+      - set firewall name VLAN40-Mal-Ingress rule 60 source group network-group VLAN10-Proxy
+      - set firewall name VLAN40-Mal-Ingress rule 60 protocol tcp
+      - set firewall name VLAN40-Mal-Ingress rule 60 destination port 8006
+
+      - set interface ethernet eth1 vif 40 firewall out name VLAN40-Mal-Ingress
